@@ -1,165 +1,144 @@
-import streamlit as st
-import time
-import os
 import pandas as pd
-import main
+import numpy as np
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-st.set_page_config(
-    page_title="Legal Precedent Classifier",
-    page_icon="⚖️",
-    layout="centered",
-    initial_sidebar_state="expanded"
-)
+# --- NLTK Data Download Fix ---
+# We use a simple try/except LookupError block to download the data.
+# This avoids the AttributeError caused by nltk.downloader.DownloadError.
+# We download all necessary resources: punkt, stopwords, and wordnet.
 
-def load_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+print("--- NLTK Data Check ---")
+try:
+    # Attempt to download resources silently. This is the correct way
+    # to ensure resources are available in the deployment environment.
+    nltk.download('wordnet', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt', quiet=True)
+    print("NLTK data downloaded successfully.")
+except LookupError as e:
+    # If a LookupError occurs (resource not found), the download still attempts
+    # to proceed, but we handle the error gracefully just in case.
+    print(f"NLTK download failed to locate resources, but attempting to continue. Error: {e}")
+except Exception as e:
+    # Catch any other unexpected errors during the download phase.
+    print(f"An unexpected error occurred during NLTK download: {e}")
+
+
+# --- ML Pipeline Setup ---
+
+TEXT_COL = 'case_text'
+LABEL_COL = 'case_outcome'
+TARGET_CLASSES = ['cited', 'followed', 'referred to']
+
+print("--- Phase 1: Multi-Class Labeling ---")
+
+# Initialize NLP tools after ensuring resources are downloaded
+try:
+    lemmatizer = WordNetLemmatizer()
+    english_stopwords = set(stopwords.words('english'))
+except LookupError:
+    print("FATAL ERROR: NLTK resources (wordnet/stopwords) are still missing after download attempts. Please re-run the script.")
+    exit()
+
+print("--- Phase 1: Data Preparation ---")
+# Using the recommended encoding fixes for UnicodeDecodeError
 
 try:
-    load_css("style.css")
+    # Try the most common fixes for Unicode errors
+    df = pd.read_csv('gyaniproject.csv', encoding='latin-1')
+except UnicodeDecodeError:
+    df = pd.read_csv('gyaniproject.csv', encoding='cp1252')
 except FileNotFoundError:
-    st.error("style.css not found. Please ensure it exists in the project directory.")
+    print("ERROR: File 'gyaniproject.csv' not found. Please ensure it is in the project directory.")
+    # In a real Streamlit app, you would handle this gracefully in the UI
+    df = pd.DataFrame({TEXT_COL: [], LABEL_COL: []}) # Create empty DataFrame to prevent crash
+    # exit() # Prevent crash if running locally
 
-with st.sidebar:
-    st.header("📁 Project Context")
-    st.markdown(
-        "This internal tool connects a legal-text classifier with a Streamlit UI to surface citation relationships in case law."
-    )
-    st.markdown("---")
-
-    st.subheader("👥 Roles")
-
-    st.markdown(
-        """
-        <div class="role-card">
-            <div class="role-title">Deployment Engineer</div>
-            <div class="role-desc">A. HANEETH (AD24B1005)</div>
-        </div>
-        <div class="role-card">
-            <div class="role-title">ML Developer</div>
-            <div class="role-desc">A. HANEETH (AD24B1005) &amp; A. Ranvitha Reddy (AD24B1004)</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-
-    st.subheader("🛠️ Tech Stack")
-    st.markdown(
-        """
-        <div style="background-color: #112240; padding: 12px; border-radius: 8px; color: #8892B0; font-family: monospace; font-size: 0.9rem; line-height: 1.6;">
-        Streamlit<br>Flask<br>Pandas<br>NLTK<br>Scikit-learn (TF-IDF, Logistic Regression)
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-    st.markdown('<div style="color: #8892B0; font-size: 0.8rem;">Project Version v1.0</div>', unsafe_allow_html=True)
-
-
-st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-st.markdown('<h1>⚖️ Legal Precedent Classifier</h1>', unsafe_allow_html=True)
-
-st.markdown(
-    """
-    <div class="description-text">
-        Tool to analyze legal text for the presence of citation relationships<br>
-        <b>(Cited, Followed, Referred To)</b>. Paste text below to classify.
-    </div>
-    """,
-    unsafe_allow_html=True,
+df['HAS_CITATION'] = df[LABEL_COL].apply(
+    lambda x: 1 if str(x).lower() in TARGET_CLASSES else 0
 )
+df[TEXT_COL] = df[TEXT_COL].fillna('')
 
 
-def predict_citation(text: str):
-    """Use the trained ML model from main.py to predict citation type.
-
-    Returns (has_citation:int, label:str, probs:dict).
-    """
-    time.sleep(0.2)  
-    model = main.model
-    vectorizer = main.tfidf_vectorizer
-    classes = model.classes_
-
-    cleaned_text = text.lower()
-    features = vectorizer.transform([cleaned_text])
-
-    # Raw model prediction
-    label = model.predict(features)[0]
-
-    # Build probability dictionary
-    proba = model.predict_proba(features)[0]
-    probs = {str(cls): float(p) for cls, p in zip(classes, proba)}
-
-    has_citation = 1 if str(label).lower() in ["cited", "followed", "referred to"] else 0
-    return has_citation, label, probs
-
-# Action Button
-# Using columns to center the button if needed, or just full width
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    analyze_button = st.button("ANALYZE CITATION")
-
-# Input Field
-legal_text = st.text_area(
-    "Paste Legal Text Here.",
-    height=220,
-    placeholder="Enter the legal case text or citation context here...",
-    label_visibility="visible",
-)
-
-if analyze_button:
-    if not legal_text.strip():
-        st.warning("⚠️ Please enter some text to analyze.")
+def create_multi_class_label(outcome):
+    outcome_lower = str(outcome).lower()
+    if outcome_lower in TARGET_CLASSES:
+        return outcome_lower
     else:
-        with st.spinner("Analyzing text for citation patterns..."):
-            has_relation, label, probs = predict_citation(legal_text)
-            
-            if has_relation == 1:
-                pretty_label = str(label).title()
-                st.markdown(
-                    """
-                    <div class="result-card success-card">
-                        <div class="success-title">✅ CITATION: {}</div>
-                        <div class="confidence-score">Predicted Type: <b>Citation - {}</b></div>
-                    </div>
-                    """.format(pretty_label, pretty_label),
-                    unsafe_allow_html=True,
-                )
-            else:
-                pretty_label = str(label).title()
-                st.markdown(
-                    """
-                    <div class="result-card failure-card">
-                        <div class="failure-title">❌ NO CITATION RELATIONSHIP DETECTED</div>
-                        <div class="confidence-score">
-                            Cited / Followed / Referred To not found.<br>
-                            Model label: <b>{}</b>
-                        </div>
-                    </div>
-                    """.format(pretty_label),
-                    unsafe_allow_html=True,
-                )
+        return 'other' 
 
-            if probs:
-                probs_df = pd.DataFrame(
-                    {
-                        "Class": [str(k).title() for k in probs.keys()],
-                        "Probability": list(probs.values()),
-                    }
-                ).sort_values("Probability", ascending=False)
+df['CITATION_TYPE'] = df[LABEL_COL].apply(create_multi_class_label)
+X_text_raw = df[TEXT_COL]
+y_multi = df['CITATION_TYPE']
 
-                st.markdown("**Model class probabilities**")
-                st.dataframe(
-                    probs_df.style.format({"Probability": "{:.2%}"}),
-                    use_container_width=True,
-                )
+print(f"Total documents: {len(df)}")
+# Check if the DataFrame is empty before trying to print markdown tables
+if not df.empty:
+    print(f"Multi-Class distribution:\n{y_multi.value_counts().to_markdown()}")
+else:
+    print("Multi-Class distribution: Data is empty or not loaded.")
 
-                probs_chart = probs_df.set_index("Class")
-                st.bar_chart(probs_chart)
+print("\n--- Phase 2 & 3: Cleaning & Feature Engineering ---")
 
-# --- Footer ---
-st.markdown('<div class="footer">Legal Tech AI Pipeline • Internal Tool • 2025</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+X_text_cleaned = X_text_raw.apply(lambda x: x.lower()) 
+tfidf_vectorizer = TfidfVectorizer(max_features=5000)
+X_features = tfidf_vectorizer.fit_transform(X_text_cleaned)
+
+# Only proceed with ML if data is available
+if X_features.shape[0] > 0 and len(y_multi.unique()) > 1:
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_features, 
+        y_multi, 
+        test_size=0.2, 
+        random_state=42,
+        stratify=y_multi 
+    )
+    print("Data Split using Multi-Class Labels.")
+    print("\n--- Phase 4: Multi-Class Model Training and Evaluation ---")
+
+    model = LogisticRegression(solver='liblinear', random_state=42, class_weight='balanced')
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    print("\nFinal Multi-Class Model Evaluation (Classification Report):")
+    print(classification_report(y_test, y_pred, zero_division=0))
+    cm = confusion_matrix(y_test, y_pred, labels=y_multi.unique())
+    cm_df = pd.DataFrame(cm, 
+                         index=[f'Actual: {c}' for c in y_multi.unique()], 
+                         columns=[f'Predicted: {c}' for c in y_multi.unique()])
+
+    print("\n--- Multi-Class Confusion Matrix ---")
+    print(cm_df.to_markdown(numalign="left", stralign="left"))
+
+    # --- Prediction Functions ---
+    def demonstrate_model(text_input):
+        """Takes raw text and predicts the citation type."""
+        cleaned_input = tfidf_vectorizer.transform([text_input])
+        prediction = model.predict(cleaned_input)[0]
+        return prediction
+
+    def demonstrate_proba(text_input):
+        """Return class probabilities for a given input text.
+
+        Output is a dict mapping class label -> probability.
+        """
+        cleaned_input = tfidf_vectorizer.transform([text_input])
+        proba = model.predict_proba(cleaned_input)[0]
+        return dict(zip(model.classes_, proba))
+
+    example_text = "The court strictly followed the principle established in the previous case."
+    print(f"\n--- Model Demonstration ---")
+    print(f"Input: {example_text[:60]}...")
+    print(f"Predicted Citation Type: **{demonstrate_model(example_text).upper()}**")
+
+else:
+    print("Skipping model training: Insufficient data or classes after loading.")
