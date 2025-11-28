@@ -1,0 +1,268 @@
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700&display=swap");
+
+/* Global Variables */
+:root {
+  --primary-navy: #0a192f;
+  --secondary-blue: #112240;
+  --accent-gold: #ffd700;
+  --text-dark: #e2e8f0;
+  --text-light: #8892b0;
+  --bg-dark: #0b1324;
+  --panel-dark: #0f172a;
+  --white: #ffffff;
+  --success-green: #22c55e;
+  --failure-red: #ef4444;
+}
+
+/* Main App Background */
+.stApp {
+  background-color: var(--bg-dark) !important;
+  font-family: "Inter", sans-serif;
+  color: var(--text-dark);
+}
+
+/* --- Typography --- */
+h1 {
+  font-family: "Merriweather", serif !important;
+  color: #c2d3ff !important;
+  font-weight: 700 !important;
+  text-align: center;
+  margin-bottom: 0.5rem !important;
+}
+
+.description-text {
+  font-family: "Inter", sans-serif;
+  color: var(--text-light);
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+/* --- Sidebar Styling --- */
+[data-testid="stSidebar"] {
+  background-color: #0a1222 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+  color: #e2e8f0 !important;
+  font-family: "Inter", sans-serif;
+}
+
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] li,
+[data-testid="stSidebar"] span {
+  color: var(--text-light) !important;
+}
+
+[data-testid="stSidebar"] hr {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Custom Sidebar Role Cards */
+.role-card {
+  background-color: #0f223f;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border-left: 3px solid var(--accent-gold);
+}
+.role-title {
+  color: #e5e7eb;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+.role-desc {
+  color: #9fb0c9;
+  font-size: 0.8rem;
+}
+
+/* --- Input Area (Dark Theme) --- */
+.stTextArea textarea {
+  background-color: var(--panel-dark) !important;
+  color: var(--text-dark) !important;
+  border: 1px solid rgba(136, 146, 176, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 15px !important;
+  font-family: "Inter", sans-serif !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s ease;
+}
+
+.stTextArea label {
+  color: var(--text-dark) !important;
+  font-weight: 600;
+}
+
+.stTextArea textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+.stTextArea textarea::placeholder {
+  color: rgba(136, 146, 176, 0.5) !important;
+}
+
+/* --- Button Styling --- */
+.stButton > button {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0b1f44 100%);
+  color: var(--white) !important;
+  font-family: "Inter", sans-serif !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.8rem 2rem !important;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 6px 16px rgba(2, 6, 23, 0.45);
+}
+
+.stButton > button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.6);
+  background: linear-gradient(135deg, #274899 0%, #0d2a59 100%);
+}
+
+.stButton > button:active {
+  transform: translateY(0);
+}
+
+div[data-testid="stDataFrame"],
+div[data-testid="stDataFrame"] > div,
+div[data-testid="stDataFrame"] > div > div {
+  background-color: var(--panel-dark) !important;
+}
+
+div[data-testid="stDataFrame"] table,
+div[data-testid="stDataFrame"] thead,
+div[data-testid="stDataFrame"] tbody,
+div[data-testid="stDataFrame"] tr {
+  background-color: var(--panel-dark) !important;
+}
+
+div[data-testid="stDataFrame"] th {
+  background-color: var(--secondary-blue) !important;
+  color: var(--text-dark) !important;
+  border-color: rgba(136, 146, 176, 0.2) !important;
+}
+
+div[data-testid="stDataFrame"] td {
+  background-color: var(--panel-dark) !important;
+  color: var(--text-light) !important;
+  border-color: rgba(136, 146, 176, 0.2) !important;
+}
+
+/* Override any inline styles */
+table {
+  background-color: var(--panel-dark) !important;
+}
+
+thead,
+tbody,
+tr {
+  background-color: var(--panel-dark) !important;
+}
+
+div[data-testid="stVegaLiteChart"],
+div[data-testid="stArrowVegaLiteChart"],
+div[data-testid="stVegaLiteChart"] > div,
+div[data-testid="stArrowVegaLiteChart"] > div {
+  background-color: var(--panel-dark) !important;
+}
+
+canvas {
+  background-color: var(--panel-dark) !important;
+}
+
+.vega-embed,
+.vega-embed summary,
+.vega-embed details {
+  background-color: var(--panel-dark) !important;
+}
+
+[class*="stChart"] {
+  background-color: var(--panel-dark) !important;
+}
+
+[style*="background: white"],
+[style*="background-color: white"],
+[style*="background: rgb(255, 255, 255)"],
+[style*="background-color: rgb(255, 255, 255)"],
+[style*="background:#fff"],
+[style*="background-color:#fff"] {
+  background-color: var(--panel-dark) !important;
+  background: var(--panel-dark) !important;
+}
+
+.result-card {
+  padding: 25px;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: 2rem;
+  animation: fadeIn 0.5s ease-in-out;
+  background-color: var(--panel-dark);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+}
+
+.success-card {
+  background-color: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.success-title {
+  color: var(--success-green);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.failure-card {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.failure-title {
+  color: var(--failure-red);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.confidence-score {
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.stMarkdown {
+  color: var(--text-dark) !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
