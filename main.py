@@ -35,10 +35,9 @@ lemmatizer = WordNetLemmatizer()
 english_stopwords = set(stopwords.words('english'))
 print("--- Phase 1: Data Preparation ---")
 try:
-    df = pd.read_csv('gyaniproject.csv', low_memory=False) 
-except FileNotFoundError:
-    print("ERROR: File not found. Check your file name or directory.")
-    exit()
+    df = pd.read_csv('gyaniproject.csv', encoding='latin-1')
+except UnicodeDecodeError:
+    df = pd.read_csv('gyaniproject.csv', encoding='cp1252')
 
 df['HAS_CITATION'] = df[LABEL_COL].apply(
     lambda x: 1 if str(x).lower() in TARGET_CLASSES else 0
